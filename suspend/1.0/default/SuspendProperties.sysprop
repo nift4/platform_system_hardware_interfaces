@@ -77,3 +77,12 @@ prop {
     access: Readonly
     prop_name: "suspend.short_suspend_backoff_enabled"
 }
+
+# Ignore wakelocks and just sleep
+prop {
+    api_name: "quick_suspend_enable"
+    type: Boolean
+    scope: Public
+    access: Readonly
+    prop_name: "sys.quick_suspend_enable"
+}

@@ -69,6 +69,7 @@ static constexpr uint32_t kDefaultBackoffThresholdCount = 0;
 static constexpr uint32_t kDefaultShortSuspendThresholdMillis = 0;
 static constexpr bool kDefaultFailedSuspendBackoffEnabled = true;
 static constexpr bool kDefaultShortSuspendBackoffEnabled = false;
+static constexpr bool kDefaultQuickSuspend = false;
 
 int main() {
     unique_fd wakeupCountFd{TEMP_FAILURE_RETRY(open(kSysPowerWakeupCount, O_CLOEXEC | O_RDWR))};
@@ -127,6 +128,8 @@ int main() {
             kDefaultShortSuspendBackoffEnabled),
     };
 
+    bool quickSuspend = SuspendProperties::quick_suspend_enable().value_or(kDefaultQuickSuspend);
+
     configureRpcThreadpool(1, true /* callerWillJoin */);
 
     sp<SuspendControlService> suspendControl = new SuspendControlService();
@@ -150,7 +153,7 @@ int main() {
     sp<SystemSuspend> suspend = new SystemSuspend(
         std::move(wakeupCountFd), std::move(stateFd), std::move(suspendStatsFd), kStatsCapacity,
         std::move(kernelWakelockStatsFd), std::move(wakeupReasonsFd), std::move(suspendTimeFd),
-        sleepTimeConfig, suspendControl, suspendControlInternal, true /* mUseSuspendCounter*/);
+        sleepTimeConfig, suspendControl, suspendControlInternal, true /* mUseSuspendCounter*/, quickSuspend);
 
     std::shared_ptr<SystemSuspendAidl> suspendAidl =
         ndk::SharedRefBase::make<SystemSuspendAidl>(suspend.get());

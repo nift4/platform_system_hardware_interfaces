@@ -150,6 +150,7 @@ class SystemSuspend : public RefBase {
     unique_fd mWakeLockFd;
     unique_fd mWakeUnlockFd;
     unique_fd mWakeupReasonsFd;
+    bool mQuickSuspend;
 };
 
 }  // namespace V1_0

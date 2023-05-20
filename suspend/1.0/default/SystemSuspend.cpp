@@ -126,7 +126,7 @@ SystemSuspend::SystemSuspend(unique_fd wakeupCountFd, unique_fd stateFd, unique_
                              const SleepTimeConfig& sleepTimeConfig,
                              const sp<SuspendControlService>& controlService,
                              const sp<SuspendControlServiceInternal>& controlServiceInternal,
-                             bool useSuspendCounter)
+                             bool useSuspendCounter, bool quickSuspend)
     : mSuspendCounter(0),
       mWakeupCountFd(std::move(wakeupCountFd)),
       mStateFd(std::move(stateFd)),
@@ -142,7 +142,8 @@ SystemSuspend::SystemSuspend(unique_fd wakeupCountFd, unique_fd stateFd, unique_
       mUseSuspendCounter(useSuspendCounter),
       mWakeLockFd(-1),
       mWakeUnlockFd(-1),
-      mWakeupReasonsFd(std::move(wakeupReasonsFd)) {
+      mWakeupReasonsFd(std::move(wakeupReasonsFd)),
+      mQuickSuspend(quickSuspend) {
     mControlServiceInternal->setSuspendService(this);
 
     if (!mUseSuspendCounter) {
@@ -317,7 +318,7 @@ void SystemSuspend::initAutosuspendLocked() {
                 shouldSleep = false;
 
                 mAutosuspendCondVar.wait(autosuspendLock, [this]() REQUIRES(mAutosuspendLock) {
-                    return mSuspendCounter == 0 || !mAutosuspendEnabled;
+                    return mSuspendCounter == 0 || mQuickSuspend || !mAutosuspendEnabled;
                 });
 
                 if (!mAutosuspendEnabled) continue;
@@ -338,7 +339,7 @@ void SystemSuspend::initAutosuspendLocked() {
                 }
 
                 // Check suspend counter hasn't increased while checking client liveness
-                if (mSuspendCounter > 0) {
+                if (mSuspendCounter > 0 && !mQuickSuspend) {
                     continue;
                 }
 
